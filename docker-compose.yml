@@ -1,0 +1,36 @@
+# Self-host Doop from the prebuilt image.
+# Then:
+#   BETTER_AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
+services:
+  doop:
+    image: ghcr.io/ivan-kuzmichev/doop:latest
+    ports:
+      - '4400:4400'
+    environment:
+      DATABASE_URL: postgres://doop:doop@db:5432/doop
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:4400}
+      SIGNUP_EMAIL_DOMAINS: ${SIGNUP_EMAIL_DOMAINS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: doop
+      POSTGRES_PASSWORD: doop
+      POSTGRES_DB: doop
+    volumes:
+      - doop-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U doop']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  doop-pg:
