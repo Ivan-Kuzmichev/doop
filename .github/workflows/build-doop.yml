@@ -97,6 +97,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE }}
+          # `latest` only via the raw rule below, so manual builds of old tags don't move it
+          flavor: |
+            latest=false
           tags: |
             type=semver,pattern={{version}},value=${{ steps.rel.outputs.tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.rel.outputs.tag }}
